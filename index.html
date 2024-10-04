@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Messenger</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chat { border: 1px solid #ddd; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+        input { width: calc(100% - 50px); padding: 5px; }
+        button { padding: 5px; }
+    </style>
+</head>
+<body>
+<h1>Simple Messenger</h1>
+<div id="chat"></div>
+<input type="text" id="message" placeholder="Введите сообщение">
+<button onclick="sendMessage()">Отправить</button>
+
+<script>
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onmessage = function(event) {
+        const chat = document.getElementById('chat');
+        const message = document.createElement('div');
+        message.textContent = event.data;
+        chat.appendChild(message);
+        chat.scrollTop = chat.scrollHeight;
+    };
+
+    function sendMessage() {
+        const input = document.getElementById('message');
+        if (input.value) {
+            ws.send(input.value);
+            input.value = '';
+        }
+    }
+</script>
+</body>
+</html>
