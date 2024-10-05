@@ -146,3 +146,9 @@ def get_messages(recipient_id: int, db: Session = Depends(get_db), user: models.
         {"sender_name": db.query(models.User).get(msg.sender_id).username, "message_content": msg.message_content}
         for msg in messages
     ]
+
+@app.get("/get_messages/{recipient_id}")
+async def get_messages(recipient_id: int, db: Session = Depends(get_db)):
+    messages = db.query(models.Message).filter(models.Message.recipient_id == recipient_id).all()
+    return messages
+
