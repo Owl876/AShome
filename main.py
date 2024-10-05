@@ -71,8 +71,9 @@ def login(
         db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(models.User.username == username).first()
-    if user and pwd_context.verify(password, user.password):
+    if user and pwd_context.verify(password, user.hashed_password):  # Используем hashed_password
         # Здесь вы можете сохранить информацию о пользователе в сессии или токене
         return templates.TemplateResponse("messenger.html", {"request": request, "user": user.username})
     raise HTTPException(status_code=400, detail="Неверные имя пользователя или пароль")
+
 
