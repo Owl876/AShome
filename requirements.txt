@@ -5,3 +5,4 @@ databases
 passlib[bcrypt]
 psycopg2-binary  # если используешь PostgreSQL
 jinja2  # если используешь шаблоны для рендеринга страниц
+passlib
