@@ -88,7 +88,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Получение текущего пользователя по токену
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user_id(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")  # Читаем токен из cookies
+    print(f"Token from cookies: {token}")  # Добавьте это для отладки
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     try:
         payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
         user_id: int = payload.get("sub")
@@ -97,10 +102,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if user is None:
-        raise HTTPException(status_code=401, detail="Invalid user")
-    return user
+    return user_id
+
 
 # Отображение страницы мессенджера
 @app.get("/messenger/", response_class=HTMLResponse)
