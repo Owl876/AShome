@@ -24,25 +24,6 @@ def get_db():
 def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
-@app.post("/register/")
-def register(username: str, password: str, db: Session = Depends(get_db)):
-    user = models.User(username=username, password=password)  # Здесь можно добавить хеширование пароля
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-@app.post("/send/")
-def send_message(user_id: int, content: str, db: Session = Depends(get_db)):
-    message = models.Message(user_id=user_id, content=content)
-    db.add(message)
-    db.commit()
-    db.refresh(message)
-    return message
-
-
-
 @app.post("/register/")
 def register(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     user = models.User(username=username, password=password)  # Хешируйте пароль перед сохранением
