@@ -88,7 +88,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Получение текущего пользователя по токену
-def get_current_user_id(request: Request, db: Session = Depends(get_db)):
+def get_current_user(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")  # Читаем токен из cookies
     print(f"Token from cookies: {token}")  # Добавьте это для отладки
     if not token:
