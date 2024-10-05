@@ -82,4 +82,23 @@ def login(
         return templates.TemplateResponse("messenger.html", {"request": request, "user": user.username})
     raise HTTPException(status_code=400, detail="Неверные имя пользователя или пароль")
 
+router = APIRouter()
 
+@router.post("/send_message/")
+async def send_message(
+        recipient_id: int = Form(...),
+        content: str = Form(...),
+        db: Session = Depends(get_db),
+        user_id: int = Depends(get_current_user_id)  # Предполагается, что у вас есть функция для получения текущего пользователя
+):
+    timestamp = datetime.now().isoformat()  # Записываем текущее время
+    message = models.Message(
+        sender_id=user_id,
+        recipient_id=recipient_id,
+        message_content=content,
+        timestamp=timestamp
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return {"message": "Сообщение отправлено"}
