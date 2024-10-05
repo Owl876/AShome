@@ -21,10 +21,10 @@
     <div id="messages">
       <!-- Здесь будут отображаться сообщения -->
     </div>
-    <form action="/send/" method="post" id="sendMessageForm">
-      <input type="hidden" name="recipient_id" id="recipient_id" value="">
-      <textarea name="content" id="content" required placeholder="Введите ваше сообщение..."></textarea>
-      <button type="submit">Отправить</button>
+    <form action="/send/" method="post">
+      <input type="text" name="recipient_id" placeholder="ID получателя" required>
+      <textarea name="content" placeholder="Введите сообщение" required></textarea>
+      <button type="submit">Отправить сообщение</button>
     </form>
   </div>
 </div>

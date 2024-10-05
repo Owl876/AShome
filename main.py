@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 import models
+from fastapi.responses import RedirectResponse
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
@@ -65,23 +66,22 @@ def get_login(request: Request):
 def login(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == username).first()
     if user and pwd_context.verify(password, user.hashed_password):
-        token = jwt.encode({"sub": user.id}, "SECRET_KEY", algorithm="HS256")  # Замените на ваш секретный ключ
-
-        # Отправляем токен в cookies для использования на других страницах
-        response = templates.TemplateResponse("messenger.html", {"request": request, "user": user.username})
+        token = jwt.encode({"sub": user.id}, "SECRET_KEY", algorithm="HS256")  # Ваш секретный ключ
+        response = RedirectResponse(url="/messenger/", status_code=303)  # Перенаправление на /messenger/
         response.set_cookie(key="access_token", value=token)  # Устанавливаем токен в cookies
         return response
 
     raise HTTPException(status_code=400, detail="Неверные имя пользователя или пароль")
 
 
-@app.post("/send_message/")
+@app.post("/send/")
 def send_message(request: Request, recipient_id: int = Form(...), content: str = Form(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     message = models.Message(sender_id=user_id, recipient_id=recipient_id, message_content=content)
     db.add(message)
     db.commit()
     db.refresh(message)
-    return {"message": "Сообщение отправлено!"}
+    return templates.TemplateResponse("messenger.html", {"request": request, "message": "Сообщение отправлено!"})
+
 
 @app.get("/messenger/", response_class=HTMLResponse)
 def get_messenger(request: Request, db: Session = Depends(get_db)):
