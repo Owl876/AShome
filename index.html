@@ -1,39 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Messenger</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #chat { border: 1px solid #ddd; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
-        input { width: calc(100% - 50px); padding: 5px; }
-        button { padding: 5px; }
-    </style>
+    <title>Messenger</title>
 </head>
 <body>
-<h1>Simple Messenger</h1>
-<div id="chat"></div>
-<input type="text" id="message" placeholder="Введите сообщение">
-<button onclick="sendMessage()">Отправить</button>
+<h1>Messenger</h1>
+<form id="loginForm">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button type="button" onclick="login()">Login</button>
+</form>
+
+<div id="chatWindow" style="display:none;">
+    <textarea id="chatBox" readonly></textarea><br>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button type="button" onclick="sendMessage()">Send</button>
+</div>
 
 <script>
-    const ws = new WebSocket('ws://localhost:8080');
+    let userId;
 
-    ws.onmessage = function(event) {
-        const chat = document.getElementById('chat');
-        const message = document.createElement('div');
-        message.textContent = event.data;
-        chat.appendChild(message);
-        chat.scrollTop = chat.scrollHeight;
-    };
+    function login() {
+        let username = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
+        fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: username, password: password })
+        }).then(response => response.json()).then(data => {
+            if (data.user_id) {
+                userId = data.user_id;
+                document.getElementById("chatWindow").style.display = "block";
+                document.getElementById("loginForm").style.display = "none";
+            }
+        });
+    }
 
     function sendMessage() {
-        const input = document.getElementById('message');
-        if (input.value) {
-            ws.send(input.value);
-            input.value = '';
-        }
+        let content = document.getElementById("messageInput").value;
+        fetch("/send_message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sender_id: userId, recipient_id: 1, content: content })
+        }).then(response => response.json()).then(data => {
+            document.getElementById("messageInput").value = '';
+        });
     }
 </script>
 </body>
