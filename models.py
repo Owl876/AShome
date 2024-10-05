@@ -17,7 +17,9 @@ class Message(Base):
     __tablename__ = 'messages'
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    content = Column(Text)
+    sender_id = Column(Integer, nullable=False)
+    recipient_id = Column(Integer, nullable=False)
+    message_content = Column(String, nullable=False)
+    timestamp = Column(String, nullable=False)
 
     user = relationship("User", back_populates="messages")
