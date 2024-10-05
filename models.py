@@ -17,9 +17,10 @@ class Message(Base):
     __tablename__ = 'messages'
 
     id = Column(Integer, primary_key=True, index=True)
-    sender_id = Column(Integer, nullable=False)
-    recipient_id = Column(Integer, nullable=False)
+    sender_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # Внешний ключ на пользователя
+    recipient_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # Внешний ключ на пользователя
     message_content = Column(String, nullable=False)
     timestamp = Column(String, nullable=False)
 
-    user = relationship("User", back_populates="messages")
+    sender = relationship("User", foreign_keys=[sender_id], backref="sent_messages")
+    recipient = relationship("User", foreign_keys=[recipient_id], backref="received_messages")
