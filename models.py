@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -21,6 +21,7 @@ class Message(Base):
     sender_id = Column(Integer, ForeignKey('users.id'))
     recipient_id = Column(Integer, ForeignKey('users.id'))
     message_content = Column(String)
+    timestamp = Column(DateTime)
 
     sender = relationship("User", foreign_keys=[sender_id], back_populates="messages_sent")
     recipient = relationship("User", foreign_keys=[recipient_id], back_populates="messages_received")

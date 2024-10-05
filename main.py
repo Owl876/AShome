@@ -110,16 +110,36 @@ def get_messenger(request: Request, db: Session = Depends(get_db)):
 
 # Отправка сообщения
 @app.post("/send/")
-def send_message(request: Request, recipient_id: int = Form(...), content: str = Form(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+def send_message(
+        recipient_id: int = Form(...),
+        content: str = Form(...),
+        db: Session = Depends(get_db),
+        user_id: int = Depends(get_current_user_id)
+):
     if not recipient_id or not content:
         raise HTTPException(status_code=400, detail="Recipient ID and message content are required")
 
-    message = models.Message(sender_id=user_id, recipient_id=recipient_id, message_content=content, timestamp=str(datetime.datetime.now()))
+    message = models.Message(
+        sender_id=user_id,
+        recipient_id=recipient_id,
+        message_content=content,
+        timestamp=str(datetime.datetime.now())
+    )
     db.add(message)
-    db.commit()
+    db.commit()  # Убедитесь, что здесь нет ошибок
     db.refresh(message)
 
     return {"message": message.message_content}
+
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+@app.post("/send/")
+def send_message(...):
+    logging.info(f"Received message: recipient_id={recipient_id}, content={content}")
+    # ваш код
+
 
 
 # Получение сообщений для чата
