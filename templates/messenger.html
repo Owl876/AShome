@@ -23,10 +23,10 @@
       <!-- Здесь будут отображаться сообщения -->
     </div>
 
-    <form id="messageForm">
-      <input type="hidden" name="recipient_id" id="recipient_id" required>
-      <textarea name="content" placeholder="Введите сообщение" required></textarea>
-      <button type="submit">Отправить сообщение</button>
+    <form action="/send/" method="post" id="messageForm">
+      <input type="hidden" name="recipient_id" value="{{ recipient_id }}">
+      <textarea name="content" placeholder="Введите сообщение"></textarea>
+      <button type="submit">Отправить</button>
     </form>
   </div>
 </div>
