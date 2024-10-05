@@ -8,6 +8,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 import models
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)

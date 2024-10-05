@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мессенджер</title>
-  <link rel="stylesheet" href="../static/styles.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+
 </head>
 <body>
 <div class="container">
@@ -26,15 +27,47 @@
       <textarea name="content" placeholder="Введите сообщение" required></textarea>
       <button type="submit">Отправить сообщение</button>
     </form>
+    <form action="/send/" method="post" id="messageForm">
+    <input type="hidden" name="recipient_id" value="{{ recipient_id }}">
+    <textarea name="content" placeholder="Введите сообщение"></textarea>
+    <button type="submit">Отправить</button>
+  </form>
   </div>
 </div>
 
+
+
 <script>
-  function selectUser(id, username) {
-    document.getElementById('recipient_id').value = id;
-    document.querySelector('.chat-window h2').innerText = 'Чат с ' + username;
-    // Здесь можно добавить логику для загрузки предыдущих сообщений
+  document.getElementById('messageForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const token = getCookie('access_token');  // Получаем токен из cookies
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`  // Добавляем токен в заголовок
+      }
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log(data);
+              // Обрабатываем ответ
+            })
+            .catch(error => {
+              console.error('Error:', error);
+            });
+  });
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
   }
 </script>
+
 </body>
 </html>
