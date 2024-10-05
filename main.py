@@ -131,17 +131,6 @@ def send_message(
 
     return {"message": message.message_content}
 
-import logging
-
-logging.basicConfig(level=logging.INFO)
-
-@app.post("/send/")
-def send_message(...):
-    logging.info(f"Received message: recipient_id={recipient_id}, content={content}")
-    # ваш код
-
-
-
 # Получение сообщений для чата
 @app.get("/messages/{recipient_id}", response_class=JSONResponse)
 def get_messages(recipient_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
