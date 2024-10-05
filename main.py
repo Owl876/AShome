@@ -67,7 +67,7 @@ def get_register(request: Request):
 
 @app.get("/login/", response_class=HTMLResponse)
 def get_login(request: Request):
-    return templates.TemplateResponse("messenger.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.post("/login/")
 def login(
