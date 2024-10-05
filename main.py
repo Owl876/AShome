@@ -28,9 +28,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def get_current_user_id(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user_id(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")  # Читаем токен из cookies
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     try:
-        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])  # Замените на ваш секретный ключ
+        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
         user_id: int = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
@@ -38,6 +42,7 @@ def get_current_user_id(token: str = Depends(oauth2_scheme), db: Session = Depen
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     return user_id
+
 
 @app.get("/register/", response_class=HTMLResponse)
 def get_register(request: Request):
@@ -61,8 +66,14 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
     user = db.query(models.User).filter(models.User.username == username).first()
     if user and pwd_context.verify(password, user.hashed_password):
         token = jwt.encode({"sub": user.id}, "SECRET_KEY", algorithm="HS256")  # Замените на ваш секретный ключ
-        return {"access_token": token, "token_type": "bearer"}
+
+        # Отправляем токен в cookies для использования на других страницах
+        response = templates.TemplateResponse("messenger.html", {"request": request, "user": user.username})
+        response.set_cookie(key="access_token", value=token)  # Устанавливаем токен в cookies
+        return response
+
     raise HTTPException(status_code=400, detail="Неверные имя пользователя или пароль")
+
 
 @app.post("/send_message/")
 def send_message(request: Request, recipient_id: int = Form(...), content: str = Form(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
