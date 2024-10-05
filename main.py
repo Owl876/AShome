@@ -44,15 +44,21 @@ def register(
 @app.post("/send/")
 def send_message(
         request: Request,
+        recipient_id: int = Form(...),  # Получаем ID получателя
         content: str = Form(...),
         db: Session = Depends(get_db)
 ):
-    user_id = 1  # Замените на логику получения ID текущего пользователя
-    message = models.Message(user_id=user_id, content=content)
+    user_id = 1  # Здесь вы должны использовать ID текущего пользователя
+    message = models.Message(sender_id=user_id, recipient_id=recipient_id, message_content=content)  # Используем новые поля
     db.add(message)
     db.commit()
     db.refresh(message)
     return templates.TemplateResponse("messenger.html", {"request": request, "message": "Сообщение отправлено!"})
+
+@app.get("/messenger/", response_class=HTMLResponse)
+def get_messenger(request: Request, db: Session = Depends(get_db)):
+    users = db.query(models.User).all()  # Получаем всех пользователей
+    return templates.TemplateResponse("messenger.html", {"request": request, "users": users})
 
 
 @app.get("/register/", response_class=HTMLResponse)

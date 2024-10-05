@@ -7,9 +7,19 @@
 <body>
 <h1>Мессенджер</h1>
 <form action="/send/" method="post">
-  <input type="text" name="content" placeholder="Сообщение" required>
+  <label for="recipient_id">Выберите получателя:</label>
+  <select name="recipient_id" id="recipient_id" required>
+    {% for user in users %}
+    <option value="{{ user.id }}">{{ user.username }}</option>
+    {% endfor %}
+  </select>
+  <br>
+  <label for="content">Сообщение:</label>
+  <textarea name="content" id="content" required></textarea>
+  <br>
   <button type="submit">Отправить</button>
 </form>
+
 <!-- Здесь вы можете добавить логику для отображения сообщений -->
 <p><a href="/logout/">Выйти</a></p>
 </body>
