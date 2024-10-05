@@ -31,11 +31,11 @@ def read_root(request: Request):
 def register(
         request: Request,
         username: str = Form(...),
-        hashed_password: str = Form(...),
+        password: str = Form(...),
         db: Session = Depends(get_db)
 ):
-    hashed_password = pwd_context.hash(hashed_password)  # Хешируем пароль
-    user = models.User(username=username, hashed_password=hashed_password)
+    hashed_password = pwd_context.hash(password)  # Хешируем пароль
+    user = models.User(username=username, hashed_password=hashed_password)  # Измените здесь
     db.add(user)
     db.commit()
     db.refresh(user)
