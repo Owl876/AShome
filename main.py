@@ -1,39 +1,62 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
-from database import engine, get_db
+from database import SessionLocal, engine
 import models
+from fastapi import Form
 
-app = FastAPI()
-
+# Создание таблиц
 models.Base.metadata.create_all(bind=engine)
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
-@app.post("/register")
+# Зависимость для получения сессии базы данных
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.post("/register/")
 def register(username: str, password: str, db: Session = Depends(get_db)):
-    hashed_password = pwd_context.hash(password)
-    user = models.User(username=username, hashed_password=hashed_password)
+    user = models.User(username=username, password=password)  # Здесь можно добавить хеширование пароля
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"msg": "User created"}
+    return user
 
-@app.post("/login")
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.username == username).first()
-    if not user or not pwd_context.verify(password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    return {"msg": "Login successful", "user_id": user.id}
-
-@app.post("/send_message")
-def send_message(sender_id: int, recipient_id: int, content: str, db: Session = Depends(get_db)):
-    message = models.Message(sender_id=sender_id, recipient_id=recipient_id, message_content=content, timestamp="now")
+@app.post("/send/")
+def send_message(user_id: int, content: str, db: Session = Depends(get_db)):
+    message = models.Message(user_id=user_id, content=content)
     db.add(message)
     db.commit()
-    return {"msg": "Message sent"}
+    db.refresh(message)
+    return message
 
-@app.get("/messages")
-def get_messages(user_id: int, db: Session = Depends(get_db)):
-    messages = db.query(models.Message).filter(models.Message.recipient_id == user_id).all()
-    return messages
+
+
+@app.post("/register/")
+def register(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    user = models.User(username=username, password=password)  # Хешируйте пароль перед сохранением
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return templates.TemplateResponse("index.html", {"request": request, "message": "Пользователь зарегистрирован!"})
+
+@app.post("/send/")
+def send_message(content: str = Form(...), db: Session = Depends(get_db)):
+    user_id = 1  # Замените на логику получения ID текущего пользователя
+    message = models.Message(user_id=user_id, content=content)
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return templates.TemplateResponse("index.html", {"request": request, "message": "Сообщение отправлено!"})
+

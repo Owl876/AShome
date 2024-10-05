@@ -1,22 +1,23 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+# models.py
+
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
-# Таблица пользователей
 class User(Base):
     __tablename__ = 'users'
+
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    password = Column(String)
 
-# Таблица сообщений
+    messages = relationship("Message", back_populates="user")
+
 class Message(Base):
     __tablename__ = 'messages'
-    id = Column(Integer, primary_key=True, index=True)
-    sender_id = Column(Integer, ForeignKey('users.id'))
-    recipient_id = Column(Integer, ForeignKey('users.id'))
-    message_content = Column(String)
-    timestamp = Column(String)
 
-    sender = relationship("User", foreign_keys=[sender_id])
-    recipient = relationship("User", foreign_keys=[recipient_id])
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    content = Column(Text)
+
+    user = relationship("User", back_populates="messages")

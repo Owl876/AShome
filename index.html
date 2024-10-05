@@ -1,51 +1,68 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Messenger</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мессенджер</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-<h1>Messenger</h1>
-<form id="loginForm">
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button type="button" onclick="login()">Login</button>
-</form>
-
-<div id="chatWindow" style="display:none;">
-    <textarea id="chatBox" readonly></textarea><br>
-    <input type="text" id="messageInput" placeholder="Type a message">
-    <button type="button" onclick="sendMessage()">Send</button>
+<header>
+    <h1>Мессенджер</h1>
+</header>
+<div class="container">
+    <h2>Регистрация</h2>
+    <form action="/register/" method="post">
+        <input type="text" name="username" placeholder="Логин" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+    <h2>Отправка сообщения</h2>
+    <form action="/send/" method="post">
+        <input type="text" name="content" placeholder="Ваше сообщение" required>
+        <button type="submit">Отправить</button>
+    </form>
 </div>
-
-<script>
-    let userId;
-
-    function login() {
-        let username = document.getElementById("username").value;
-        let password = document.getElementById("password").value;
-        fetch("/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: username, password: password })
-        }).then(response => response.json()).then(data => {
-            if (data.user_id) {
-                userId = data.user_id;
-                document.getElementById("chatWindow").style.display = "block";
-                document.getElementById("loginForm").style.display = "none";
-            }
-        });
-    }
-
-    function sendMessage() {
-        let content = document.getElementById("messageInput").value;
-        fetch("/send_message", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sender_id: userId, recipient_id: 1, content: content })
-        }).then(response => response.json()).then(data => {
-            document.getElementById("messageInput").value = '';
-        });
-    }
-</script>
 </body>
 </html>
