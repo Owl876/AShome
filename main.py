@@ -117,7 +117,7 @@ def send_message(
         recipient_id: int = Form(...),
         content: str = Form(...),
         db: Session = Depends(get_db),
-        user_id: int = Depends(get_current_user_id)
+        user_id: int = Depends(get_current_user)
 ):
     if not recipient_id or not content:
         raise HTTPException(status_code=400, detail="Recipient ID and message content are required")
