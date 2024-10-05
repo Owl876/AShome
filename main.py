@@ -53,3 +53,26 @@ def send_message(
     db.commit()
     db.refresh(message)
     return templates.TemplateResponse("index.html", {"request": request, "message": "Сообщение отправлено!"})
+
+
+@app.get("/register/", response_class=HTMLResponse)
+def get_register(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.get("/login/", response_class=HTMLResponse)
+def get_login(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login/")
+def login(
+        request: Request,
+        username: str = Form(...),
+        password: str = Form(...),
+        db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(models.User.username == username).first()
+    if user and pwd_context.verify(password, user.password):
+        # Здесь вы можете сохранить информацию о пользователе в сессии или токене
+        return templates.TemplateResponse("messenger.html", {"request": request, "user": user.username})
+    raise HTTPException(status_code=400, detail="Неверные имя пользователя или пароль")
+
