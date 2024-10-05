@@ -32,6 +32,49 @@
 </div>
 
 <script>
+  document.getElementById('messageForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const token = getCookie('access_token');  // Получаем токен из cookies
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`  // Добавляем токен в заголовок
+      }
+    })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Ошибка при отправке сообщения');
+              }
+              return response.json();
+            })
+            .then(data => {
+              // Очищаем текстовое поле после отправки сообщения
+              form.reset();
+
+              // Добавляем новое сообщение в чат
+              const messagesDiv = document.getElementById('messages');
+              const newMessage = document.createElement('div');
+              newMessage.textContent = `Вы: ${data.message}`;
+              messagesDiv.appendChild(newMessage);
+            })
+            .catch(error => {
+              console.error('Ошибка:', error);
+            });
+  });
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+</script>
+
+<script>
   function selectUser(userId, username) {
     document.getElementById('recipient_id').value = userId;
     document.getElementById('chatWith').innerText = username;
@@ -84,5 +127,32 @@
     if (parts.length === 2) return parts.pop().split(';').shift();
   }
 </script>
+
+<script>
+  function loadMessages() {
+    const token = getCookie('access_token');
+    fetch('/get_messages/', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+            .then(response => response.json())
+            .then(data => {
+              const messagesDiv = document.getElementById('messages');
+              messagesDiv.innerHTML = '';  // Очищаем окно чата
+
+              data.messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${msg.sender}: ${msg.message_content}`;
+                messagesDiv.appendChild(messageElement);
+              });
+            })
+            .catch(error => console.error('Ошибка при загрузке сообщений:', error));
+  }
+
+  // Загружаем сообщения при загрузке страницы
+  window.onload = loadMessages;
+</script>
+
 </body>
 </html>
