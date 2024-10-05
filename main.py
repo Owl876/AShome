@@ -3,8 +3,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
-import models
 from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from . import models, database
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
@@ -89,7 +91,7 @@ async def send_message(
         recipient_id: int = Form(...),
         content: str = Form(...),
         db: Session = Depends(get_db),
-        user_id: int = Depends(get_current_user_id)  # Предполагается, что у вас есть функция для получения текущего пользователя
+        user_id: int = Depends(get_current_user_id)  # Теперь это определено
 ):
     timestamp = datetime.now().isoformat()  # Записываем текущее время
     message = models.Message(
@@ -102,3 +104,23 @@ async def send_message(
     db.commit()
     db.refresh(message)
     return {"message": "Сообщение отправлено"}
+
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # Путь для получения токена
+
+def get_current_user_id(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])  # Замените на ваш секретный ключ
+        user_id: int = payload.get("sub")  # Или используйте другой ключ, который хранит ID пользователя
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    except JWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user_id
+
