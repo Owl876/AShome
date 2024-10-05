@@ -23,9 +23,9 @@ def get_db():
 # Инициализация хешера паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@app.get("/", response_class=HTMLResponse)
-def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/register/", response_class=HTMLResponse)
+def get_register(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
 
 @app.post("/register/")
 def register(
@@ -39,7 +39,7 @@ def register(
     db.add(user)
     db.commit()
     db.refresh(user)
-    return templates.TemplateResponse("index.html", {"request": request, "message": "Пользователь зарегистрирован!"})
+    return templates.TemplateResponse("login.html", {"request": request, "message": "Пользователь зарегистрирован!"})
 
 @app.post("/send/")
 def send_message(
@@ -52,7 +52,7 @@ def send_message(
     db.add(message)
     db.commit()
     db.refresh(message)
-    return templates.TemplateResponse("index.html", {"request": request, "message": "Сообщение отправлено!"})
+    return templates.TemplateResponse("messenger.html", {"request": request, "message": "Сообщение отправлено!"})
 
 
 @app.get("/register/", response_class=HTMLResponse)
