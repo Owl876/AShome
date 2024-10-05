@@ -31,7 +31,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
+"""
 def get_current_user_id(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")  # Читаем токен из cookies
     if not token:
@@ -46,7 +46,7 @@ def get_current_user_id(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     return user_id
-
+"""
 
 @app.get("/register/", response_class=HTMLResponse)
 def get_register(request: Request):
@@ -85,7 +85,6 @@ def get_db():
         db.close()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-"""
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Получение текущего пользователя по токену
@@ -105,24 +104,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     return user_id
-"""
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user = get_user_from_db(payload.get("sub"))
-        if user is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
 
 # Отображение страницы мессенджера
 @app.get("/messenger/", response_class=HTMLResponse)
 def get_messenger(request: Request, db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     return templates.TemplateResponse("messenger.html", {"request": request, "users": users})
-
+"""
 # Отправка сообщения
 @app.post("/send/")
 def send_message(
@@ -145,10 +134,47 @@ def send_message(
     db.refresh(message)
 
     return {"message": message.message_content}
+"""
 
+def get_current_user_id(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")  # Читаем токен из cookies
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    return user_id
+
+@app.post("/send/")
+def send_message(
+        recipient_id: int = Form(...),
+        content: str = Form(...),
+        db: Session = Depends(get_db),
+        user_id: int = Depends(get_current_user_id)
+):
+    if not recipient_id or not content:
+        raise HTTPException(status_code=400, detail="Recipient ID and message content are required")
+
+    message = models.Message(
+        sender_id=user_id,
+        recipient_id=recipient_id,
+        message_content=content,
+        timestamp=datetime.datetime.now()
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    return {"message": message.message_content}
 # Получение сообщений для чата
 @app.get("/messages/{recipient_id}", response_class=JSONResponse)
-def get_messages(recipient_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+def get_messages(recipient_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user_id)):
     messages = db.query(models.Message).filter(
         ((models.Message.sender_id == user.id) & (models.Message.recipient_id == recipient_id)) |
         ((models.Message.sender_id == recipient_id) & (models.Message.recipient_id == user.id))
