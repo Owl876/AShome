@@ -5,62 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мессенджер</title>
   <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
-
 </head>
 <body>
 <div class="container">
   <div class="user-list">
     <h2>Пользователи</h2>
-    <ul>
+    <ul id="userList">
       {% for user in users %}
       <li onclick="selectUser({{ user.id }}, '{{ user.username }}')">{{ user.username }}</li>
       {% endfor %}
     </ul>
   </div>
+
   <div class="chat-window">
-    <h2>Чат</h2>
+    <h2>Чат с <span id="chatWith">...</span></h2>
     <div id="messages">
       <!-- Здесь будут отображаться сообщения -->
     </div>
-    <form action="/send/" method="post">
-      <input type="text" name="recipient_id" placeholder="ID получателя" required>
+
+    <form id="messageForm">
+      <input type="hidden" name="recipient_id" id="recipient_id" required>
       <textarea name="content" placeholder="Введите сообщение" required></textarea>
       <button type="submit">Отправить сообщение</button>
     </form>
-    <form action="/send/" method="post" id="messageForm">
-    <input type="hidden" name="recipient_id" value="{{ recipient_id }}">
-    <textarea name="content" placeholder="Введите сообщение"></textarea>
-    <button type="submit">Отправить</button>
-  </form>
   </div>
 </div>
 
-
-
 <script>
+  function selectUser(userId, username) {
+    document.getElementById('recipient_id').value = userId;
+    document.getElementById('chatWith').innerText = username;
+    loadMessages(userId);
+  }
+
   document.getElementById('messageForm').addEventListener('submit', function(event) {
     event.preventDefault();
-
     const token = getCookie('access_token');  // Получаем токен из cookies
     const form = event.target;
     const formData = new FormData(form);
 
-    fetch(form.action, {
+    fetch('/send/', {
       method: 'POST',
       body: formData,
       headers: {
-        'Authorization': `Bearer ${token}`  // Добавляем токен в заголовок
+        'Authorization': `Bearer ${token}`
       }
     })
             .then(response => response.json())
             .then(data => {
               console.log(data);
-              // Обрабатываем ответ
+              if (data.message) {
+                loadMessages(document.getElementById('recipient_id').value);
+              }
             })
-            .catch(error => {
-              console.error('Error:', error);
-            });
+            .catch(error => console.error('Error:', error));
   });
+
+  function loadMessages(recipientId) {
+    const token = getCookie('access_token');
+    fetch(`/messages/${recipientId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+            .then(response => response.json())
+            .then(data => {
+              const messagesDiv = document.getElementById('messages');
+              messagesDiv.innerHTML = '';  // Очищаем предыдущие сообщения
+              data.forEach(msg => {
+                messagesDiv.innerHTML += `<p><strong>${msg.sender_name}</strong>: ${msg.message_content}</p>`;
+              });
+            });
+  }
 
   function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -68,6 +84,5 @@
     if (parts.length === 2) return parts.pop().split(';').shift();
   }
 </script>
-
 </body>
 </html>

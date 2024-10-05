@@ -75,7 +75,7 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
 
     raise HTTPException(status_code=400, detail="Неверные имя пользователя или пароль")
 
-
+"""
 @app.post("/send/")
 def send_message(request: Request, recipient_id: int = Form(...), content: str = Form(...), db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     message = models.Message(sender_id=user_id, recipient_id=recipient_id, message_content=content)
@@ -89,3 +89,57 @@ def send_message(request: Request, recipient_id: int = Form(...), content: str =
 def get_messenger(request: Request, db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     return templates.TemplateResponse("messenger.html", {"request": request, "users": users})
+"""
+# Зависимость для получения сессии базы данных
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Получение текущего пользователя по токену
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid user")
+    return user
+
+# Отображение страницы мессенджера
+@app.get("/messenger/", response_class=HTMLResponse)
+def get_messenger(request: Request, db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    return templates.TemplateResponse("messenger.html", {"request": request, "users": users})
+
+# Отправка сообщения
+@app.post("/send/")
+def send_message(recipient_id: int = Form(...), content: str = Form(...), db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    message = models.Message(sender_id=user.id, recipient_id=recipient_id, message_content=content)
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return {"message": "Сообщение отправлено!"}
+
+# Получение сообщений для чата
+@app.get("/messages/{recipient_id}", response_class=JSONResponse)
+def get_messages(recipient_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    messages = db.query(models.Message).filter(
+        ((models.Message.sender_id == user.id) & (models.Message.recipient_id == recipient_id)) |
+        ((models.Message.sender_id == recipient_id) & (models.Message.recipient_id == user.id))
+    ).all()
+
+    return [
+        {"sender_name": db.query(models.User).get(msg.sender_id).username, "message_content": msg.message_content}
+        for msg in messages
+    ]
