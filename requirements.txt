@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+sqlalchemy
+databases
+psycopg2-binary  # если используешь PostgreSQL
+jinja2  # если используешь шаблоны для рендеринга страниц
