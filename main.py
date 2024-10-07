@@ -172,6 +172,8 @@ def send_message(
     db.refresh(message)
 
     return {"message": message.message_content}
+
+
 # Получение сообщений для чата
 @app.get("/messages/{recipient_id}", response_class=JSONResponse)
 def get_messages(recipient_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user_id)):

@@ -1,104 +1,122 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мессенджер</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+  <title>Messenger</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #E5E5E5;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 30%;
+      background-color: #2AABEE;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .chat-list {
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    .chat {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+    }
+    .chat:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .chat img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .chat-info {
+      flex-grow: 1;
+    }
+    .chat-info h3 {
+      margin-bottom: 5px;
+    }
+    .chat-info p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .main-chat {
+      width: 70%;
+      background-color: #FFF;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #888;
+      text-align: center;
+      padding: 20px;
+    }
+    .main-chat h2 {
+      margin-bottom: 10px;
+    }
+    .main-chat p {
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-  <div class="user-list">
-    <h2>Пользователи</h2>
-    <ul id="userList">
-      {% for user in users %}
-      <li onclick="selectUser({{ user.id }}, '{{ user.username }}')">{{ user.username }}</li>
-      {% endfor %}
-    </ul>
-  </div>
 
-  <div class="chat-window">
-    <h2>Чат с <span id="chatWith">...</span></h2>
-    <div id="messages">
-      <!-- Здесь будут отображаться сообщения -->
+<div class="sidebar">
+  <h2>Messenger</h2>
+  <div class="chat-list">
+    <div class="chat">
+      <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="User Avatar">
+      <div class="chat-info">
+        <h3>Ivan Ivanov</h3>
+        <p>Last message: Hey, what's up?</p>
+      </div>
     </div>
-
-    <form id="messageForm" action="/send/" method="POST">
-      <input type="hidden" name="recipient_id" id="recipient_id" required>
-      <textarea name="content" placeholder="Введите сообщение" required></textarea>
-      <button type="submit">Отправить сообщение</button>
-    </form>
+    <div class="chat">
+      <img src="https://randomuser.me/api/portraits/women/2.jpg" alt="User Avatar">
+      <div class="chat-info">
+        <h3>Maria Smirnova</h3>
+        <p>Last message: Let's meet tomorrow.</p>
+      </div>
+    </div>
+    <div class="chat">
+      <img src="https://randomuser.me/api/portraits/men/3.jpg" alt="User Avatar">
+      <div class="chat-info">
+        <h3>Alex Petrov</h3>
+        <p>Last message: Got it, thanks!</p>
+      </div>
+    </div>
+    <div class="chat">
+      <img src="https://randomuser.me/api/portraits/women/4.jpg" alt="User Avatar">
+      <div class="chat-info">
+        <h3>Elena Kuznetsova</h3>
+        <p>Last message: See you soon.</p>
+      </div>
+    </div>
   </div>
 </div>
 
-<script>
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-  }
-
-  function selectUser(userId, username) {
-    document.getElementById('recipient_id').value = userId;
-    document.getElementById('chatWith').innerText = username;
-    loadMessages(userId);
-  }
-
-  function loadMessages(recipientId) {
-    const token = getCookie('access_token');
-    fetch(`/messages/${recipientId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-            .then(response => response.json())
-            .then(data => {
-              const messagesDiv = document.getElementById('messages');
-              messagesDiv.innerHTML = '';  // Очищаем предыдущие сообщения
-              data.forEach(msg => {
-                messagesDiv.innerHTML += `<p><strong>${msg.sender_name}</strong>: ${msg.message_content}</p>`;
-              });
-            })
-            .catch(error => console.error('Ошибка при загрузке сообщений:', error));
-  }
-
-  document.getElementById('messageForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    const token = getCookie('access_token');  // Получаем токен из cookies
-    const form = event.target;
-    const formData = new FormData(form);
-
-    fetch(form.action, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Authorization': `Bearer ${token}`  // Добавляем токен в заголовок
-      }
-    })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error('Ошибка при отправке сообщения');
-              }
-              return response.json();
-            })
-            .then(data => {
-              form.reset();  // Очищаем текстовое поле после отправки сообщения
-              loadMessages(document.getElementById('recipient_id').value);  // Обновляем сообщения
-            })
-            .catch(error => {
-              console.error('Ошибка:', error);
-            });
-  });
-
-  // Загружаем сообщения при загрузке страницы для первого пользователя
-  window.onload = function() {
-    const firstUserId = document.querySelector('#userList li')?.getAttribute('onclick').match(/\d+/)?.[0];
-    if (firstUserId) {
-      selectUser(firstUserId, document.querySelector('#userList li').innerText);
-    }
-  };
-</script>
+<div class="main-chat">
+  <h2>Select a chat to start messaging</h2>
+  <p>Your messages will appear here.</p>
+</div>
 
 </body>
 </html>
