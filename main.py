@@ -134,7 +134,7 @@ def send_message(
     db.refresh(message)
 
     return {"message": message.message_content}
-"""
+
 
 def get_current_user_id(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")  # Читаем токен из cookies
@@ -192,3 +192,4 @@ async def get_messages(recipient_id: int, db: Session = Depends(get_db)):
     messages = db.query(models.Message).filter(models.Message.recipient_id == recipient_id).all()
     return messages
 
+"""
